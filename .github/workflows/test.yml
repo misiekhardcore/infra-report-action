@@ -27,8 +27,8 @@ jobs:
         id: get-report
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          argocd_token: ${{ steps.secrets.outputs.ARGOCD_TOKEN }}
-          snyk_token: ${{ steps.secrets.outputs.SNYK_TOKEN }}
+          argocd_token: ${{ secrets.ARGOCD_TOKEN }}
+          snyk_token: ${{ secrets.SNYK_TOKEN }}
           config_file_path: ${{ github.workspace }}/.github/workflows/infra-report-config.json
 
       - name: Print report

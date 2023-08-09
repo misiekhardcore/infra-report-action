@@ -163,7 +163,7 @@ class GithubService extends types_1.Service {
             const promises = [];
             for (const workflow of workflows) {
                 if (typeof workflow === 'string') {
-                    promises.push(this.fetchWorkflow(workflow, 'master'));
+                    promises.push(this.fetchWorkflow(workflow));
                 }
                 else {
                     const { name, branches } = workflow;
@@ -173,7 +173,7 @@ class GithubService extends types_1.Service {
                         }
                     }
                     else {
-                        promises.push(this.fetchWorkflow(name, 'master'));
+                        promises.push(this.fetchWorkflow(name));
                     }
                 }
             }
@@ -422,11 +422,15 @@ function readConfig(configFilePath) {
 }
 exports.readConfig = readConfig;
 function parseReport(results) {
-    return results.reduce((result, { messages, title }) => {
+    return results
+        .reduce((result, { messages, title }) => {
         if (!messages.length || !title)
             return result;
-        return `${result}${title}\n${messages.join('\n')}\n`;
-    }, '');
+        result.push(title);
+        result.push(messages.join('\n'));
+        return result;
+    }, [])
+        .join('\n');
 }
 exports.parseReport = parseReport;
 function capitalize(string) {
