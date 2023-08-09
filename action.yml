@@ -1,0 +1,26 @@
+name: 'Infra report'
+description: 'Github action to prepare a report containing status of last GHA runs, Snyk vulnerabilities and ArgoCD environments.'
+author: 'misiekhardcore'
+inputs:
+  github_token:
+    description: >
+      Token to authenticate requests to GitHub.
+      Used to create and label pull requests and to comment.
+      Either GITHUB_TOKEN or a repo-scoped Personal Access Token (PAT).
+  argocd_token:
+    description: >
+      Token to authenticate requests to ArgoCD API. Used to get selected environments state.
+  snyk_token:
+    description: >
+      Token to authenticate requests to Snyk API. Used to get list of vulnerabilities for specified snyk projects.
+  config_file_path:
+    description: >
+      Path to config file.
+    required: true
+outputs:
+  infra_report:
+    description: >
+      Parsed report containing infra information about selected environments. Output is in slack message format.
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

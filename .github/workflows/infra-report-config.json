@@ -1,0 +1,13 @@
+{
+  "github": {
+    "organization": "misiekhardcore",
+    "repository": "infra-report-action",
+    "workflows": [
+      {
+        "name": "test",
+        "branches": ["main"]
+      },
+      "check-dist"
+    ]
+  }
+}

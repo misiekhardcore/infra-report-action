@@ -1,0 +1,35 @@
+name: 'build-test'
+on: # rebuild any PRs and main branch changes
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'releases/*'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build: # make sure build/ci work properly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          npm install
+      - run: |
+          npm run all
+  test: # make sure the action works on a clean machine without building
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        id: get-report
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          config_file_path: ${{ github.workspace }}/.github/workflows/infra-report-config.json
+
+      - name: Print report
+        run: >
+          multiline_output="${{ steps.get-report.outputs.infra_report }}"
+          echo "$multiline_output"
