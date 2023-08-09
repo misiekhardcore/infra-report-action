@@ -74,7 +74,7 @@ export default class GithubService extends Service {
 
     for (const workflow of workflows) {
       if (typeof workflow === 'string') {
-        promises.push(this.fetchWorkflow(workflow, 'master'))
+        promises.push(this.fetchWorkflow(workflow))
       } else {
         const {name, branches} = workflow
         if (branches) {
@@ -82,7 +82,7 @@ export default class GithubService extends Service {
             promises.push(this.fetchWorkflow(name, branch))
           }
         } else {
-          promises.push(this.fetchWorkflow(name, 'master'))
+          promises.push(this.fetchWorkflow(name))
         }
       }
     }
