@@ -34,7 +34,4 @@ jobs:
       - name: Print report
         run: >
           multiline_output="${{ steps.get-report.outputs.infra_report }}"
-          IFS=$'\n' read -ra lines <<< "$multiline_output"
-          for line in "${lines[@]}"; do
-            echo "Line: $line"
-          done
+          echo "$multiline_output"
