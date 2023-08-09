@@ -1,11 +1,26 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Infra report'
+description: 'Github action to prepare and post a slack message with a report containing status of last github actions runs, snyk vulnerabilities and ArgoCD environments.'
+author: 'misiekhardcore'
 inputs:
-  milliseconds: # change this
-    required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  github_token:
+    description: >
+      Token to authenticate requests to GitHub.
+      Used to create and label pull requests and to comment.
+      Either GITHUB_TOKEN or a repo-scoped Personal Access Token (PAT).
+    default: ${{ github.token }}
+  argocd_token:
+    description: >
+      Token to authenticate requests to ArgoCD API. Used to get selected environments status.
+  snyk_token:
+    description: >
+      Token to authenticate requests to Snyk API. Used to get list of vulnerabilities for specified snyk projects.
+  config_file_path:
+    description: >
+      Path to config file. It will default to the default file stored in the action itself.
+outputs:
+  infra_report:
+    description: >
+      Parsed report containing infra information about selected environments
 runs:
   using: 'node16'
   main: 'dist/index.js'
