@@ -33,7 +33,8 @@ jobs:
 
       - name: Print report
         run: >
-          export TEST=$(cat <<EOF
-          ${{ steps.get-report.outputs.infra_report }}
-          EOF)
-          echo $TEST
+          multiline_output="${{ steps.get-report.outputs.infra_report }}"
+          IFS=$'\n' read -ra lines <<< "$multiline_output"
+          for line in "${lines[@]}"; do
+            echo "Line: $line"
+          done
