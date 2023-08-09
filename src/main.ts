@@ -20,10 +20,12 @@ async function run(): Promise<void> {
     const argocdService = new ArgoCdService(argocdToken, config)
 
     const ciResults = await githubService.getResult()
+    core.debug(ciResults.messages.join('\n'))
     const argocdResults = await argocdService.getResult()
     const snykResults = await snykService.getResult()
 
     const report = parseReport([ciResults, argocdResults, snykResults])
+    core.debug(report)
     core.setOutput('infra_report', report)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

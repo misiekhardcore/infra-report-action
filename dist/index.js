@@ -32,9 +32,6 @@ class ArgoCdService extends types_1.Service {
         super();
         this.title = ':argocd: *ArgoCD envs status:*';
         this.validateInputs = () => {
-            if (!this.token) {
-                throw new Error('Argo: token was not provided');
-            }
             if (!this.config.argoCd) {
                 throw new Error('Argo: config is missing');
             }
@@ -44,6 +41,9 @@ class ArgoCdService extends types_1.Service {
         };
         this.getResult = () => __awaiter(this, void 0, void 0, function* () {
             const { argoCd: { project, title = this.title } } = this.config;
+            if (!this.token) {
+                return { messages: [], title };
+            }
             const applications = (yield this.fetchArgoCdAplications(project)).items || [];
             const messages = applications.map(this.parseMessage);
             return { title, messages };
@@ -136,9 +136,6 @@ class GithubService extends types_1.Service {
         super();
         this.title = ':github: *GH actions status:*';
         this.validateInputs = () => {
-            if (!this.token) {
-                throw new Error('Github: token was not provided');
-            }
             if (!this.config.github) {
                 throw new Error('Github: config is missing');
             }
@@ -154,6 +151,9 @@ class GithubService extends types_1.Service {
         };
         this.getResult = () => __awaiter(this, void 0, void 0, function* () {
             const { github: { workflows, title = this.title } } = this.config;
+            if (!this.token) {
+                return { messages: [], title };
+            }
             const workflowRuns = yield this.getWorkflowRuns(workflows);
             const lastCompletedRuns = this.getLastCompletedWorkflowRuns(workflowRuns);
             const messages = lastCompletedRuns.map(this.parseMessage);
@@ -251,19 +251,21 @@ const snyk_1 = __importDefault(__nccwpck_require__(8343));
 const github_1 = __importDefault(__nccwpck_require__(5928));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const githubToken = core.getInput('github_token') || process.env.GITHUB_TOKEN;
-        const argocdToken = core.getInput('argocd_token') || process.env.ARGOCD_TOKEN;
-        const snykToken = core.getInput('snyk_token') || process.env.SNYK_TOKEN;
-        const configFIlePath = core.getInput('config_file_path') || './config.json';
+        const githubToken = core.getInput('github_token');
+        const argocdToken = core.getInput('argocd_token');
+        const snykToken = core.getInput('snyk_token');
+        const configFIlePath = core.getInput('config_file_path');
         try {
             const config = (0, utils_1.readConfig)(configFIlePath);
             const githubService = new github_1.default(githubToken, config);
             const snykService = new snyk_1.default(snykToken, config);
             const argocdService = new argo_1.default(argocdToken, config);
             const ciResults = yield githubService.getResult();
+            core.debug(ciResults.messages.join('\n'));
             const argocdResults = yield argocdService.getResult();
             const snykResults = yield snykService.getResult();
             const report = (0, utils_1.parseReport)([ciResults, argocdResults, snykResults]);
+            core.debug(report);
             core.setOutput('infra_report', report);
         }
         catch (error) {
@@ -310,9 +312,6 @@ class SnykService extends types_1.Service {
         this.title = ':snyk: *Snyk status:*';
         this.defaultVulns = ['critical', 'high'];
         this.validateInputs = () => {
-            if (!this.token) {
-                throw new Error('Snyk: token was not provided');
-            }
             if (!this.config.snyk) {
                 throw new Error('Snyk: config is missing');
             }
@@ -325,6 +324,9 @@ class SnykService extends types_1.Service {
         };
         this.getResult = () => __awaiter(this, void 0, void 0, function* () {
             const { snyk: { projects, title = this.title } } = this.config;
+            if (!this.token) {
+                return { messages: [], title };
+            }
             const allProjects = (yield this.fetchSnykProjects()).projects || [];
             const projectSummaries = projects
                 .map(({ origin, project, versions }) => versions.map(version => {
