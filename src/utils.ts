@@ -16,10 +16,14 @@ export function readConfig(configFilePath: string): Config {
 }
 
 export function parseReport(results: Result[]): string {
-  return results.reduce((result, {messages, title}) => {
-    if (!messages.length || !title) return result
-    return `${result}${title}\n${messages.join('\n')}\n`
-  }, '')
+  return results
+    .reduce<string[]>((result, {messages, title}) => {
+      if (!messages.length || !title) return result
+      result.push(title)
+      result.push(messages.join('\n'))
+      return result
+    }, [])
+    .join('\n')
 }
 
 export function capitalize(string: string): string {
