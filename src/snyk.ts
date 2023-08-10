@@ -62,12 +62,17 @@ export default class SnykService extends Service {
 
     const projectSummaries: SnykSummary[] = projects
       .map(({origin, project, versions}) =>
-        versions.map<SnykSummary>(version => {
+        versions.map<SnykSummary | undefined>(version => {
           const filteredProjects = this.filterProjects(
             allProjects,
             version,
             project
           )
+
+          if (!filteredProjects.length) {
+            return
+          }
+
           return {
             vulns: this.getProjectVulns(filteredProjects),
             name: version,
@@ -76,6 +81,7 @@ export default class SnykService extends Service {
         })
       )
       .flat()
+      .filter((project): project is SnykSummary => project !== undefined)
 
     const messages = projectSummaries.map(this.formatResults)
 
