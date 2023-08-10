@@ -343,7 +343,9 @@ class SnykService extends types_1.Service {
             }, { high: 0, critical: 0, medium: 0, low: 0 });
         };
         this.getProjectUrl = (project, version, origin) => {
-            return `https://app.snyk.io/org/${this.config.snyk.organization}/reporting?context%5Bpage%5D=issues-detail&project_target=${project}&project_origin=${origin}&target_ref=${version}&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=High%257CCritical`;
+            const { vulnLevels = this.defaultVulns } = this.config.snyk;
+            const vulnsList = vulnLevels.map(utils_1.capitalize).join('%257C');
+            return `https://app.snyk.io/org/${this.config.snyk.organization}/reporting?context%5Bpage%5D=issues-detail&project_target=${project}&project_origin=${origin}&target_ref=${version}&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=${vulnsList}`;
         };
         this.formatResults = (projectSummary) => {
             const { vulnLevels = this.defaultVulns } = this.config.snyk;

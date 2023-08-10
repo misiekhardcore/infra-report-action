@@ -118,7 +118,9 @@ export default class SnykService extends Service {
     version: string,
     origin: string
   ): string => {
-    return `https://app.snyk.io/org/${this.config.snyk.organization}/reporting?context%5Bpage%5D=issues-detail&project_target=${project}&project_origin=${origin}&target_ref=${version}&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=High%257CCritical`
+    const {vulnLevels = this.defaultVulns} = this.config.snyk
+    const vulnsList = vulnLevels.map(capitalize).join('%257C')
+    return `https://app.snyk.io/org/${this.config.snyk.organization}/reporting?context%5Bpage%5D=issues-detail&project_target=${project}&project_origin=${origin}&target_ref=${version}&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=${vulnsList}`
   }
 
   private formatResults = (projectSummary: SnykSummary): string => {
