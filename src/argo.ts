@@ -22,6 +22,10 @@ export default class ArgoCdService extends Service {
   }
 
   protected validateInputs = (): void => {
+    if (!this.token) {
+      throw new Error('Argo: token is missing')
+    }
+
     if (!this.config.argoCd) {
       throw new Error('Argo: config is missing')
     }

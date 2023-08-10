@@ -13,6 +13,12 @@ describe('ArgoCdService', () => {
     }
   }
 
+  test('should throw an error if token is missing', () => {
+    expect(() => new ArgoCdService('', {} as Config)).toThrow(
+      'Argo: token is missing'
+    )
+  })
+
   test('should throw an error if config is missing', () => {
     expect(() => new ArgoCdService(token, {} as Config)).toThrow(
       'Argo: config is missing'

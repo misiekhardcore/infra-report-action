@@ -25,6 +25,10 @@ export default class GithubService extends Service {
   }
 
   protected validateInputs = (): void => {
+    if (!this.token) {
+      throw new Error('Github: token is missing')
+    }
+
     if (!this.config.github) {
       throw new Error('Github: config is missing')
     }

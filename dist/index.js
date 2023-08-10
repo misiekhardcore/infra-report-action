@@ -26,6 +26,9 @@ class ArgoCdService extends types_1.Service {
         super();
         this.title = ':argocd: *ArgoCD envs status:*';
         this.validateInputs = () => {
+            if (!this.token) {
+                throw new Error('Argo: token is missing');
+            }
             if (!this.config.argoCd) {
                 throw new Error('Argo: config is missing');
             }
@@ -121,6 +124,9 @@ class GithubService extends types_1.Service {
         super();
         this.title = ':github: *GH actions status:*';
         this.validateInputs = () => {
+            if (!this.token) {
+                throw new Error('Github: token is missing');
+            }
             if (!this.config.github) {
                 throw new Error('Github: config is missing');
             }
@@ -297,6 +303,9 @@ class SnykService extends types_1.Service {
         this.title = ':snyk: *Snyk status:*';
         this.defaultVulns = ['critical', 'high'];
         this.validateInputs = () => {
+            if (!this.token) {
+                throw new Error('Snyk: token is missing');
+            }
             if (!this.config.snyk) {
                 throw new Error('Snyk: config is missing');
             }
@@ -309,9 +318,6 @@ class SnykService extends types_1.Service {
         };
         this.getResult = () => __awaiter(this, void 0, void 0, function* () {
             const { snyk: { projects, title = this.title } } = this.config;
-            if (!this.token) {
-                return { messages: [], title };
-            }
             const allProjects = (yield this.fetchSnykProjects()).projects || [];
             const projectSummaries = projects
                 .map(({ origin, project, versions }) => versions.map(version => {

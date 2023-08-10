@@ -14,6 +14,12 @@ describe('GithubService', () => {
     }
   }
 
+  test('should throw an error if token is missing', () => {
+    expect(() => new GithubService('', {} as Config)).toThrow(
+      'Github: token is missing'
+    )
+  })
+
   test('should throw an error if config is missing', () => {
     expect(() => new GithubService(token, {} as Config)).toThrow(
       'Github: config is missing'
