@@ -316,13 +316,17 @@ class SnykService extends types_1.Service {
             const projectSummaries = projects
                 .map(({ origin, project, versions }) => versions.map(version => {
                 const filteredProjects = this.filterProjects(allProjects, version, project);
+                if (!filteredProjects.length) {
+                    return;
+                }
                 return {
                     vulns: this.getProjectVulns(filteredProjects),
                     name: version,
                     url: this.getProjectUrl(project, version, origin)
                 };
             }))
-                .flat();
+                .flat()
+                .filter((project) => project !== undefined);
             const messages = projectSummaries.map(this.formatResults);
             return { title, messages };
         });
