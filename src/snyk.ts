@@ -36,6 +36,10 @@ export default class SnykService extends Service {
   }
 
   protected validateInputs = (): void => {
+    if (!this.token) {
+      throw new Error('Snyk: token is missing')
+    }
+
     if (!this.config.snyk) {
       throw new Error('Snyk: config is missing')
     }
@@ -53,10 +57,6 @@ export default class SnykService extends Service {
     const {
       snyk: {projects, title = this.title}
     } = this.config
-
-    if (!this.token) {
-      return {messages: [], title}
-    }
 
     const allProjects = (await this.fetchSnykProjects()).projects || []
 

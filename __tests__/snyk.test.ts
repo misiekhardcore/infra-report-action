@@ -24,6 +24,12 @@ describe('SnykService', () => {
     }
   }
 
+  test('should throw an error if token is missing', () => {
+    expect(() => new SnykService('', {} as Config)).toThrow(
+      'Snyk: token is missing'
+    )
+  })
+
   test('should throw an error if config is missing', () => {
     expect(() => new SnykService(token, {} as Config)).toThrow(
       'Snyk: config is missing'
