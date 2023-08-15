@@ -104,8 +104,9 @@ export default class GithubService extends Service {
     workflowRuns: CiResponse[]
   ): Run[] => {
     return workflowRuns
-      .map(workflow =>
-        workflow.workflow_runs?.find(run => run.status !== 'in_progress')
+      .map(
+        workflow =>
+          workflow.workflow_runs?.find(run => run.status !== 'in_progress')
       )
       .filter((run): run is Run => run !== undefined)
   }
