@@ -50,6 +50,8 @@ The struture of this file is the following:
     organization: string;
     // Name of the repository
     repository: string;
+    // Branch for which the workflow runs should be fetched if not overriden in specific workflow
+    defaultBranch: string;
     // Array of workflows to be checked and added to the report
     workflows: (
       // Can be just a workflow filename
@@ -98,6 +100,7 @@ The struture of this file is the following:
   "github": {
     "organization": "org",
     "repository": "repo",
+    "defaultBranch": "main",
     "workflows": [
       {
         "name": "test",
