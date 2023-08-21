@@ -88,7 +88,7 @@ export default class GithubService extends Service {
 
   private fetchWorkflow = async (
     workflow: string,
-    branch?: string
+    branch = this.config.github.defaultBranch
   ): Promise<CiResponse> => {
     return fetchUrl<CiResponse>(
       `https://api.github.com/repos/${this.config.github.organization}/${
@@ -104,8 +104,9 @@ export default class GithubService extends Service {
     workflowRuns: CiResponse[]
   ): Run[] => {
     return workflowRuns
-      .map(workflow =>
-        workflow.workflow_runs?.find(run => run.status !== 'in_progress')
+      .map(
+        workflow =>
+          workflow.workflow_runs?.find(run => run.status !== 'in_progress')
       )
       .filter((run): run is Run => run !== undefined)
   }

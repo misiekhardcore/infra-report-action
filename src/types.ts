@@ -16,6 +16,7 @@ export type Config = {
   github: {
     title?: string
     organization: string
+    defaultBranch?: string
     repository: string
     workflows: GithubWorkflow[]
   }

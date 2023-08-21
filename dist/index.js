@@ -170,7 +170,7 @@ class GithubService extends types_1.Service {
             }
             return Promise.all(promises);
         });
-        this.fetchWorkflow = (workflow, branch) => __awaiter(this, void 0, void 0, function* () {
+        this.fetchWorkflow = (workflow, branch = this.config.github.defaultBranch) => __awaiter(this, void 0, void 0, function* () {
             return (0, fetchUrl_1.default)(`https://api.github.com/repos/${this.config.github.organization}/${this.config.github.repository}/actions/workflows/${workflow}.yml/runs${branch ? `?branch=${branch}` : ''}`, `token ${this.token}`);
         });
         this.getLastCompletedWorkflowRuns = (workflowRuns) => {
