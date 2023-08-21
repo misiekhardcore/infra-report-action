@@ -88,7 +88,7 @@ export default class GithubService extends Service {
 
   private fetchWorkflow = async (
     workflow: string,
-    branch?: string
+    branch = this.config.github.defaultBranch
   ): Promise<CiResponse> => {
     return fetchUrl<CiResponse>(
       `https://api.github.com/repos/${this.config.github.organization}/${
