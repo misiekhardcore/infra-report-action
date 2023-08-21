@@ -99,4 +99,15 @@ describe('GithubService', () => {
     const result = await service.getResult()
     expect(result.title).toEqual('new title')
   })
+
+  test('should use default branch if specified', async () => {
+    const service = new GithubService(token, {
+      github: {...config.github, defaultBranch: 'main'}
+    } as Config)
+    await service.getResult()
+    expect(fetchUrl).toHaveBeenCalledWith(
+      'https://api.github.com/repos/org/repo/actions/workflows/workflow1.yml/runs?branch=main',
+      'token token'
+    )
+  })
 })

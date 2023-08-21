@@ -2,6 +2,7 @@
   "github": {
     "organization": "misiekhardcore",
     "repository": "infra-report-action",
+    "defaultBranch": "main",
     "workflows": [
       {
         "name": "test",
