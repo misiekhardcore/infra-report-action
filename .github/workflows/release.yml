@@ -30,6 +30,14 @@ jobs:
           include: package.json
           regex: true
 
+      - name: Set release version in README examle
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: 'infra-report-action@[0-9\.]+'
+          replace: 'infra-report-action@${{ inputs.releaseVersion }}'
+          include: README.md
+          regex: true
+
       - name: Commit new release version
         id: commit-new-release
         uses: EndBug/add-and-commit@v9
