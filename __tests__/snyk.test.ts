@@ -1,8 +1,57 @@
 import {Config} from '../src/types'
 import SnykService from '../src/snyk'
-import fetchUrl from '../src/fetchUrl'
+import {
+  fetchSnykProjectVulnerabilities,
+  fetchSnykProjects
+} from '../src/services'
 
-jest.mock('../src/fetchUrl', () => jest.fn())
+const serverities = ['critical', 'high', 'medium', 'low']
+jest.mock('../src/services', () => ({
+  fetchSnykProjects: jest.fn().mockImplementation(() => ({
+    projects: [
+      {
+        id: 1,
+        name: 'version1project1',
+        origin: 'origin'
+      },
+      {
+        id: 2,
+        name: 'version1project2',
+        origin: 'origin'
+      },
+      {
+        id: 3,
+        name: 'version2project1',
+        origin: 'origin'
+      },
+      {
+        id: 4,
+        name: 'version2project2',
+        origin: 'origin'
+      }
+    ]
+  })),
+  fetchSnykProjectVulnerabilities: jest
+    .fn()
+    .mockImplementation(async projectId => {
+      return {
+        issues: [
+          {
+            issueData: {
+              id: '1',
+              severity: serverities[projectId - 1]
+            }
+          },
+          {
+            issueData: {
+              id: '2',
+              severity: serverities[-projectId + 1]
+            }
+          }
+        ]
+      }
+    })
+}))
 
 describe('SnykService', () => {
   const token = 'token'
@@ -62,64 +111,20 @@ describe('SnykService', () => {
   })
 
   test('should give results', async () => {
-    ;(fetchUrl as jest.Mock).mockReturnValueOnce({
-      projects: [
-        {
-          name: 'version1project1',
-          origin: 'origin',
-          issueCountsBySeverity: {
-            low: 1,
-            medium: 1,
-            high: 1,
-            critical: 1
-          }
-        },
-        {
-          name: 'version1project2',
-          origin: 'origin',
-          issueCountsBySeverity: {
-            low: 2,
-            medium: 2,
-            high: 2,
-            critical: 2
-          }
-        },
-        {
-          name: 'version2project1',
-          origin: 'origin',
-          issueCountsBySeverity: {
-            low: 3,
-            medium: 3,
-            high: 3,
-            critical: 3
-          }
-        },
-        {
-          name: 'version2project2',
-          origin: 'origin',
-          issueCountsBySeverity: {
-            low: 4,
-            medium: 4,
-            high: 4,
-            critical: 4
-          }
-        }
-      ]
-    })
     const service = new SnykService(token, config as Config)
     const result = await service.getResult()
     expect(result).toEqual({
       messages: [
-        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 1 Critical, 1 High>',
-        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version2&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version2: 3 Critical, 3 High>',
-        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project2&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 2 Critical, 2 High>'
+        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 2 Critical, 0 High>',
+        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version2&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version2: 0 Critical, 0 High>',
+        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project2&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 0 Critical, 1 High>'
       ],
       title: ':snyk: *Snyk status:*'
     })
   })
 
   test('should not give results if it didnt find projects', async () => {
-    ;(fetchUrl as jest.Mock).mockReturnValueOnce({
+    ;(fetchSnykProjects as jest.Mock).mockReturnValueOnce({
       projects: []
     })
     const service = new SnykService(token, config as Config)
@@ -131,21 +136,124 @@ describe('SnykService', () => {
   })
 
   test('should override title', async () => {
-    ;(fetchUrl as jest.Mock).mockReturnValueOnce({
-      workflow_runs: [
-        {
-          html_url: 'url',
-          name: 'name',
-          head_branch: 'main',
-          status: 'completed',
-          conclusion: 'failure'
-        }
-      ]
-    })
     const service = new SnykService(token, {
       snyk: {...config.snyk, title: 'new title'}
     } as Config)
     const result = await service.getResult()
     expect(result.title).toEqual('new title')
+  })
+
+  test('should exclude vulnerabilities by cves', async () => {
+    ;(fetchSnykProjects as jest.Mock).mockReturnValueOnce({
+      projects: [
+        {
+          name: 'project1version1',
+          origin: 'origin'
+        }
+      ]
+    })
+    ;(fetchSnykProjectVulnerabilities as jest.Mock).mockImplementationOnce(
+      () => ({
+        issues: [
+          {
+            issueData: {
+              severity: 'critical',
+              identifiers: {CVE: ['CVE-123']}
+            }
+          },
+          {
+            issueData: {
+              severity: 'high'
+            }
+          }
+        ]
+      })
+    )
+    const service = new SnykService(token, {
+      snyk: {...config.snyk, ignoredCVEs: ['CVE-123']}
+    } as Config)
+    const result = await service.getResult()
+    expect(result).toEqual({
+      messages: [
+        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 0 Critical, 1 High>'
+      ],
+      title: ':snyk: *Snyk status:*'
+    })
+  })
+
+  test('should exclude vulnerabilities by cwes', async () => {
+    ;(fetchSnykProjects as jest.Mock).mockReturnValueOnce({
+      projects: [
+        {
+          name: 'project1version1',
+          origin: 'origin'
+        }
+      ]
+    })
+    ;(fetchSnykProjectVulnerabilities as jest.Mock).mockImplementationOnce(
+      () => ({
+        issues: [
+          {
+            issueData: {
+              severity: 'critical',
+              identifiers: {CWE: ['CWE-123']}
+            }
+          },
+          {
+            issueData: {
+              severity: 'high'
+            }
+          }
+        ]
+      })
+    )
+    const service = new SnykService(token, {
+      snyk: {...config.snyk, ignoredCWEs: ['CWE-123']}
+    } as Config)
+    const result = await service.getResult()
+    expect(result).toEqual({
+      messages: [
+        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 0 Critical, 1 High>'
+      ],
+      title: ':snyk: *Snyk status:*'
+    })
+  })
+
+  test('should exclude vulnerabilities by name', async () => {
+    ;(fetchSnykProjects as jest.Mock).mockReturnValueOnce({
+      projects: [
+        {
+          name: 'project1version1',
+          origin: 'origin'
+        }
+      ]
+    })
+    ;(fetchSnykProjectVulnerabilities as jest.Mock).mockImplementationOnce(
+      () => ({
+        issues: [
+          {
+            issueData: {
+              id: 'some package',
+              severity: 'critical'
+            }
+          },
+          {
+            issueData: {
+              severity: 'high'
+            }
+          }
+        ]
+      })
+    )
+    const service = new SnykService(token, {
+      snyk: {...config.snyk, ignoredVulnIds: ['some package']}
+    } as Config)
+    const result = await service.getResult()
+    expect(result).toEqual({
+      messages: [
+        '<https://app.snyk.io/org/org/reporting?context%5Bpage%5D=issues-detail&project_target=project1&project_origin=github&target_ref=version1&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=Critical%257CHigh|version1: 0 Critical, 1 High>'
+      ],
+      title: ':snyk: *Snyk status:*'
+    })
   })
 })

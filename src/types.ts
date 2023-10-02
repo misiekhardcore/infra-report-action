@@ -29,6 +29,9 @@ export type Config = {
     title?: string
     organization: string
     vulnLevels?: VulnLevel[]
+    ignoredCVEs?: string[]
+    ignoredCWEs?: string[]
+    ignoredVulnIds?: string[]
     projects: {
       project: string
       origin: string
