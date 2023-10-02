@@ -1,8 +1,9 @@
-import fetchUrl from './fetchUrl'
+import {fetchSnykProjectVulnerabilities, fetchSnykProjects} from './services'
 import {Config, Result, Service, VulnLevel} from './types'
 import {capitalize} from './utils'
 
 type SnykProject = {
+  id: string
   name: string
   origin: string
   issueCountsBySeverity: {
@@ -13,14 +14,44 @@ type SnykProject = {
   }
 }
 
-type SnykProjectsResponse = {
+export type SnykProjectsResponse = {
   projects: SnykProject[]
+}
+
+type SnykIssue = {
+  issueType: string
+  issueData: {
+    id: string
+    title: string
+    severity: VulnLevel
+    identifiers?: {
+      CWE?: string[]
+      CVE?: string[]
+    }
+  }
+  isPatched: boolean
+  isIgnored: boolean
+}
+
+type SnykProjectWithIssues = SnykProject & Partial<SnykIssuesResponse>
+
+export type SnykIssuesResponse = {
+  issues: SnykIssue[]
 }
 
 type SnykSummary = {
   name: string
   vulns: Record<VulnLevel, number>
   url: string
+}
+
+type FilterFunction<T = unknown> = (project: T) => boolean
+
+type ProjectsGroup = {
+  version: string
+  project: string
+  origin: string
+  projects: SnykProjectWithIssues[]
 }
 
 export default class SnykService extends Service {
@@ -58,29 +89,29 @@ export default class SnykService extends Service {
       snyk: {projects, title = this.title}
     } = this.config
 
-    const allProjects = (await this.fetchSnykProjects()).projects || []
+    const allProjects =
+      (await fetchSnykProjects(this.config.snyk.organization, this.token))
+        .projects || []
 
-    const projectSummaries: SnykSummary[] = projects
-      .map(({origin, project, versions}) =>
-        versions.map<SnykSummary | undefined>(version => {
-          const filteredProjects = this.filterProjects(
-            allProjects,
-            version,
-            project
-          )
+    const allProjectsWithVulns = await Promise.all(
+      allProjects.map<Promise<SnykProjectWithIssues>>(async project => ({
+        ...project,
+        issues: await this.getFilteredVulnerabilities(project)
+      }))
+    )
 
-          if (!filteredProjects.length) {
-            return
-          }
+    const filteredProjects = allProjectsWithVulns.filter(
+      this.handleFilters([this.filterProjectsFromConfig(projects)])
+    )
 
-          return {
-            vulns: this.getProjectVulns(filteredProjects),
-            name: version,
-            url: this.getProjectUrl(project, version, origin)
-          }
-        })
-      )
-      .flat()
+    const groupedProjects = this.groupByProjectAndVersion(
+      projects,
+      filteredProjects
+    )
+
+    const projectSummaries: SnykSummary[] = groupedProjects
+      .filter(({projects}) => !!projects.length)
+      .map(this.getSummaryForProjectGroup)
       .filter((project): project is SnykSummary => project !== undefined)
 
     const messages = projectSummaries.map(this.formatResults)
@@ -88,31 +119,105 @@ export default class SnykService extends Service {
     return {title, messages}
   }
 
-  private fetchSnykProjects = async (): Promise<SnykProjectsResponse> => {
-    return fetchUrl<SnykProjectsResponse>(
-      `https://snyk.io/api/v1/org/${this.config?.snyk.organization}/projects`,
-      `token ${this.token}`
+  private getFilteredVulnerabilities = async (
+    project: SnykProject
+  ): Promise<SnykIssue[]> => {
+    const {issues} = await fetchSnykProjectVulnerabilities(
+      project.id,
+      this.config.snyk.organization,
+      this.token
+    )
+
+    return issues.filter(
+      this.handleFilters([
+        this.filterPatchedIgnored,
+        this.filterCves(this.config.snyk.ignoredCVEs),
+        this.filterCwes(this.config.snyk.ignoredCWEs),
+        this.filterVulnIds(this.config.snyk.ignoredVulnIds)
+      ])
     )
   }
 
-  private filterProjects = (
-    projects: SnykProject[],
-    name: string,
-    project: string
-  ): SnykProject[] => {
-    return projects.filter(
-      ({name: projectName}) =>
-        projectName.includes(project) && projectName.includes(name)
-    )
-  }
+  private filterPatchedIgnored: FilterFunction<SnykIssue> = ({
+    isIgnored,
+    isPatched
+  }) => !isIgnored && !isPatched
 
-  private getProjectVulns = (projects: SnykProject[]): SnykSummary['vulns'] => {
+  private filterCves =
+    (ignoredCves?: string[]): FilterFunction<SnykIssue> =>
+    issue =>
+      !ignoredCves?.some(cve => issue.issueData.identifiers?.CVE?.includes(cve))
+
+  private filterCwes =
+    (ignoredCwes?: string[]): FilterFunction<SnykIssue> =>
+    issue =>
+      !ignoredCwes?.some(cwe => issue.issueData.identifiers?.CWE?.includes(cwe))
+
+  private filterVulnIds =
+    (ignoredVulnIds?: string[]): FilterFunction<SnykIssue> =>
+    issue =>
+      !ignoredVulnIds?.some(name => issue.issueData.id === name)
+
+  private handleFilters =
+    <T = unknown>(filters: FilterFunction<T>[]) =>
+    (item: T): boolean => {
+      return filters.every(filter => filter(item))
+    }
+
+  private filterProjectsFromConfig =
+    (configProjects: Config['snyk']['projects']): FilterFunction<SnykProject> =>
+    ({name: projectName}) =>
+      configProjects.some(({project, versions}) =>
+        versions.some(
+          version =>
+            projectName.includes(project) && projectName.includes(version)
+        )
+      )
+
+  private groupByProjectAndVersion = (
+    configProjects: Config['snyk']['projects'],
+    projects: SnykProjectWithIssues[]
+  ): ProjectsGroup[] =>
+    configProjects.reduce<ProjectsGroup[]>(
+      (result, {origin, project, versions}) => {
+        for (const version of versions) {
+          const projectsForVersion = projects.filter(
+            ({name}) => name.includes(project) && name.includes(version)
+          )
+          result.push({
+            origin,
+            project,
+            version,
+            projects: projectsForVersion
+          })
+        }
+        return result
+      },
+      []
+    )
+
+  private getSummaryForProjectGroup = ({
+    origin,
+    project,
+    projects,
+    version
+  }: ProjectsGroup): SnykSummary => ({
+    vulns: this.getProjectVulns(projects),
+    name: version,
+    url: this.getProjectUrl(project, version, origin)
+  })
+
+  private getProjectVulns = (
+    projects: SnykProjectWithIssues[]
+  ): SnykSummary['vulns'] => {
     return projects.reduce<SnykSummary['vulns']>(
-      (vulns, {issueCountsBySeverity}) => {
-        vulns.critical += issueCountsBySeverity.critical
-        vulns.high += issueCountsBySeverity.high
-        vulns.medium += issueCountsBySeverity.medium
-        vulns.low += issueCountsBySeverity.low
+      (vulns, {issues = []}) => {
+        for (const issue of issues) {
+          const {
+            issueData: {severity}
+          } = issue
+          vulns[severity]++
+        }
         return vulns
       },
       {high: 0, critical: 0, medium: 0, low: 0}

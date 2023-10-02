@@ -86,10 +86,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const node_fetch_1 = __importDefault(__nccwpck_require__(467));
-function fetchUrl(url, authHeader) {
+function fetchUrl(url, authHeader, method = 'GET') {
     return __awaiter(this, void 0, void 0, function* () {
         const response = yield (0, node_fetch_1.default)(url, {
-            headers: { Authorization: authHeader }
+            headers: { Authorization: authHeader },
+            method
         });
         return response.json();
     });
@@ -276,7 +277,7 @@ run();
 
 /***/ }),
 
-/***/ 8343:
+/***/ 8261:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -294,7 +295,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fetchSnykProjectVulnerabilities = exports.fetchSnykProjects = void 0;
 const fetchUrl_1 = __importDefault(__nccwpck_require__(5050));
+const fetchSnykProjects = (organizationId, token) => __awaiter(void 0, void 0, void 0, function* () {
+    return (0, fetchUrl_1.default)(`https://snyk.io/api/v1/org/${organizationId}/projects`, `token ${token}`);
+});
+exports.fetchSnykProjects = fetchSnykProjects;
+const fetchSnykProjectVulnerabilities = (projectId, organizationId, token) => __awaiter(void 0, void 0, void 0, function* () {
+    return (0, fetchUrl_1.default)(`https://snyk.io/api/v1/org/${organizationId}/project/${projectId}/aggregated-issues`, `token ${token}`, 'POST');
+});
+exports.fetchSnykProjectVulnerabilities = fetchSnykProjectVulnerabilities;
+
+
+/***/ }),
+
+/***/ 8343:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const services_1 = __nccwpck_require__(8261);
 const types_1 = __nccwpck_require__(8164);
 const utils_1 = __nccwpck_require__(918);
 class SnykService extends types_1.Service {
@@ -318,37 +348,60 @@ class SnykService extends types_1.Service {
         };
         this.getResult = () => __awaiter(this, void 0, void 0, function* () {
             const { snyk: { projects, title = this.title } } = this.config;
-            const allProjects = (yield this.fetchSnykProjects()).projects || [];
-            const projectSummaries = projects
-                .map(({ origin, project, versions }) => versions.map(version => {
-                const filteredProjects = this.filterProjects(allProjects, version, project);
-                if (!filteredProjects.length) {
-                    return;
-                }
-                return {
-                    vulns: this.getProjectVulns(filteredProjects),
-                    name: version,
-                    url: this.getProjectUrl(project, version, origin)
-                };
-            }))
-                .flat()
+            const allProjects = (yield (0, services_1.fetchSnykProjects)(this.config.snyk.organization, this.token))
+                .projects || [];
+            const allProjectsWithVulns = yield Promise.all(allProjects.map((project) => __awaiter(this, void 0, void 0, function* () {
+                return (Object.assign(Object.assign({}, project), { issues: yield this.getFilteredVulnerabilities(project) }));
+            })));
+            const filteredProjects = allProjectsWithVulns.filter(this.handleFilters([this.filterProjectsFromConfig(projects)]));
+            const groupedProjects = this.groupByProjectAndVersion(projects, filteredProjects);
+            const projectSummaries = groupedProjects
+                .filter(({ projects }) => !!projects.length)
+                .map(this.getSummaryForProjectGroup)
                 .filter((project) => project !== undefined);
             const messages = projectSummaries.map(this.formatResults);
             return { title, messages };
         });
-        this.fetchSnykProjects = () => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            return (0, fetchUrl_1.default)(`https://snyk.io/api/v1/org/${(_a = this.config) === null || _a === void 0 ? void 0 : _a.snyk.organization}/projects`, `token ${this.token}`);
+        this.getFilteredVulnerabilities = (project) => __awaiter(this, void 0, void 0, function* () {
+            const { issues } = yield (0, services_1.fetchSnykProjectVulnerabilities)(project.id, this.config.snyk.organization, this.token);
+            return issues.filter(this.handleFilters([
+                this.filterPatchedIgnored,
+                this.filterCves(this.config.snyk.ignoredCVEs),
+                this.filterCwes(this.config.snyk.ignoredCWEs),
+                this.filterVulnIds(this.config.snyk.ignoredVulnIds)
+            ]));
         });
-        this.filterProjects = (projects, name, project) => {
-            return projects.filter(({ name: projectName }) => projectName.includes(project) && projectName.includes(name));
+        this.filterPatchedIgnored = ({ isIgnored, isPatched }) => !isIgnored && !isPatched;
+        this.filterCves = (ignoredCves) => issue => !(ignoredCves === null || ignoredCves === void 0 ? void 0 : ignoredCves.some(cve => { var _a, _b; return (_b = (_a = issue.issueData.identifiers) === null || _a === void 0 ? void 0 : _a.CVE) === null || _b === void 0 ? void 0 : _b.includes(cve); }));
+        this.filterCwes = (ignoredCwes) => issue => !(ignoredCwes === null || ignoredCwes === void 0 ? void 0 : ignoredCwes.some(cwe => { var _a, _b; return (_b = (_a = issue.issueData.identifiers) === null || _a === void 0 ? void 0 : _a.CWE) === null || _b === void 0 ? void 0 : _b.includes(cwe); }));
+        this.filterVulnIds = (ignoredVulnIds) => issue => !(ignoredVulnIds === null || ignoredVulnIds === void 0 ? void 0 : ignoredVulnIds.some(name => issue.issueData.id === name));
+        this.handleFilters = (filters) => (item) => {
+            return filters.every(filter => filter(item));
         };
+        this.filterProjectsFromConfig = (configProjects) => ({ name: projectName }) => configProjects.some(({ project, versions }) => versions.some(version => projectName.includes(project) && projectName.includes(version)));
+        this.groupByProjectAndVersion = (configProjects, projects) => configProjects.reduce((result, { origin, project, versions }) => {
+            for (const version of versions) {
+                const projectsForVersion = projects.filter(({ name }) => name.includes(project) && name.includes(version));
+                result.push({
+                    origin,
+                    project,
+                    version,
+                    projects: projectsForVersion
+                });
+            }
+            return result;
+        }, []);
+        this.getSummaryForProjectGroup = ({ origin, project, projects, version }) => ({
+            vulns: this.getProjectVulns(projects),
+            name: version,
+            url: this.getProjectUrl(project, version, origin)
+        });
         this.getProjectVulns = (projects) => {
-            return projects.reduce((vulns, { issueCountsBySeverity }) => {
-                vulns.critical += issueCountsBySeverity.critical;
-                vulns.high += issueCountsBySeverity.high;
-                vulns.medium += issueCountsBySeverity.medium;
-                vulns.low += issueCountsBySeverity.low;
+            return projects.reduce((vulns, { issues = [] }) => {
+                for (const issue of issues) {
+                    const { issueData: { severity } } = issue;
+                    vulns[severity]++;
+                }
                 return vulns;
             }, { high: 0, critical: 0, medium: 0, low: 0 });
         };

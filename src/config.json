@@ -1,0 +1,20 @@
+{
+  "snyk": {
+    "organization": "team-optimize",
+    "vulnLevels": ["critical", "high", "medium", "low"],
+    "ignoredCVEs": ["CVE-2023-40167"],
+    "ignoredCWEs": ["CWE-149"],
+    "projects": [
+      {
+        "project": "camunda/camunda-optimize",
+        "versions": ["master"],
+        "origin": "github"
+      },
+      {
+        "project": "camunda/optimize",
+        "versions": ["SNAPSHOT", "3.10.5", "3.9.5", "3.8.6", "3.7.3"],
+        "origin": "docker-hub"
+      }
+    ]
+  }
+}

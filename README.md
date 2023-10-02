@@ -80,6 +80,12 @@ The struture of this file is the following:
     organization: string;
     // Which vulnerability levels should be counted and displayed in the report (defaults to ["critical", "high"])
     vulnLevels?: ('critical' | 'high' | 'medium' | 'low')[];
+    // A list of CVEs to ignore
+    ignoredCVEs?: string[]
+    // A list of CWEs to ignore
+    ignoredCWEs?: string[]
+    // A list of vulnerability ids to ignore
+    ignoredVulnIds?: string[]
     // A list of snyk projects
     projects: {
       // Project name
@@ -117,6 +123,9 @@ The struture of this file is the following:
     "title": "some title to override the default",
     "organization": "org",
     "vulnLevels": ["critical", "high", "medium", "low"],
+    "ignoredCVEs": ["CVE-123-4567"],
+    "ignoredCWEs": ["CWE-890"],
+    "ignoredVulnIds": ["snyk:lic:maven:ch.qos.logback:logback-core:(EPL-1.0_OR_LGPL-2.1)"],
     "projects": [
       {
         "project": "project",
