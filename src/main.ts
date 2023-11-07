@@ -4,7 +4,8 @@ import {readConfig, parseReport} from './utils'
 
 import ArgoCdService from './argo'
 import SnykService from './snyk'
-import GithubService from './github'
+import GithubActionsService from './github-actions'
+import GithubPRsService from './github-prs'
 import {Service} from './types'
 
 async function run(): Promise<void> {
@@ -18,8 +19,17 @@ async function run(): Promise<void> {
     const services: Service[] = []
 
     if (githubToken) {
-      const githubService = new GithubService(githubToken, config)
-      services.push(githubService)
+      if (config.github) {
+        const githubActionsService = new GithubActionsService(
+          githubToken,
+          config
+        )
+        services.push(githubActionsService)
+      }
+      if (config.githubPrs) {
+        const githubPRsService = new GithubPRsService(githubToken, config)
+        services.push(githubPRsService)
+      }
     }
     if (argocdToken) {
       const argocdService = new ArgoCdService(argocdToken, config)

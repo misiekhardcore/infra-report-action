@@ -1,10 +1,10 @@
 import {Config} from '../src/types'
-import GithubService from '../src/github'
+import GithubActionsService from '../src/github-actions'
 import fetchUrl from '../src/fetchUrl'
 
 jest.mock('../src/fetchUrl', () => jest.fn())
 
-describe('GithubService', () => {
+describe('GithubActionsService', () => {
   const token = 'token'
   const config: Pick<Config, 'github'> = {
     github: {
@@ -15,40 +15,43 @@ describe('GithubService', () => {
   }
 
   test('should throw an error if token is missing', () => {
-    expect(() => new GithubService('', {} as Config)).toThrow(
+    expect(() => new GithubActionsService('', {} as Config)).toThrow(
       'Github: token is missing'
     )
   })
 
   test('should throw an error if config is missing', () => {
-    expect(() => new GithubService(token, {} as Config)).toThrow(
+    expect(() => new GithubActionsService(token, {} as Config)).toThrow(
       'Github: config is missing'
     )
   })
 
   test('should throw an error if organization is missing in config', () => {
-    expect(() => new GithubService(token, {github: {}} as Config)).toThrow(
-      'Github: organization is missing'
-    )
+    expect(
+      () => new GithubActionsService(token, {github: {}} as Config)
+    ).toThrow('Github: organization is missing')
   })
 
   test('should throw an error if repository is missing in config', () => {
     expect(
-      () => new GithubService(token, {github: {organization: 'org'}} as Config)
+      () =>
+        new GithubActionsService(token, {
+          github: {organization: 'org'}
+        } as Config)
     ).toThrow('Github: repository is missing')
   })
 
   test('should throw an error if workflows are missing in config', () => {
     expect(
       () =>
-        new GithubService(token, {
+        new GithubActionsService(token, {
           github: {organization: 'org', repository: 'repo'}
         } as Config)
     ).toThrow('Github: no workflows were passed to be checked')
 
     expect(
       () =>
-        new GithubService(token, {
+        new GithubActionsService(token, {
           github: {
             organization: 'org',
             repository: 'repo',
@@ -73,7 +76,7 @@ describe('GithubService', () => {
         ]
       }
     })
-    const service = new GithubService(token, config as Config)
+    const service = new GithubActionsService(token, config as Config)
     const result = await service.getResult()
     expect(result).toEqual({
       messages: ['🟢 <url|name1 (main)>', '🔴 <url|name2 (main)>'],
@@ -93,7 +96,7 @@ describe('GithubService', () => {
         }
       ]
     })
-    const service = new GithubService(token, {
+    const service = new GithubActionsService(token, {
       github: {...config.github, title: 'new title'}
     } as Config)
     const result = await service.getResult()
@@ -101,7 +104,7 @@ describe('GithubService', () => {
   })
 
   test('should use default branch if specified', async () => {
-    const service = new GithubService(token, {
+    const service = new GithubActionsService(token, {
       github: {...config.github, defaultBranch: 'main'}
     } as Config)
     await service.getResult()

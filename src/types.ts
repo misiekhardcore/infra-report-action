@@ -12,6 +12,19 @@ export type GithubWorkflow =
     }
   | string
 
+export type PRState = 'open' | 'close' | 'all'
+
+export type PRResultType = 'list' | 'count'
+
+export type PRParams = {
+  author?: string
+  base?: string
+  labels?: string[]
+  state?: PRState
+  title?: string
+  resultType?: PRResultType
+}
+
 export type Config = {
   github: {
     title?: string
@@ -37,6 +50,12 @@ export type Config = {
       origin: string
       versions: string[]
     }[]
+  }
+  githubPrs: {
+    title?: string
+    organization: string
+    repository: string
+    prs: PRParams[]
   }
 }
 

@@ -100,7 +100,7 @@ exports["default"] = fetchUrl;
 
 /***/ }),
 
-/***/ 5928:
+/***/ 6905:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -120,7 +120,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const fetchUrl_1 = __importDefault(__nccwpck_require__(5050));
 const types_1 = __nccwpck_require__(8164);
-class GithubService extends types_1.Service {
+class GithubActionsService extends types_1.Service {
     constructor(token, config) {
         super();
         this.title = ':github: *GH actions status:*';
@@ -190,7 +190,159 @@ class GithubService extends types_1.Service {
         this.validateInputs();
     }
 }
-exports["default"] = GithubService;
+exports["default"] = GithubActionsService;
+
+
+/***/ }),
+
+/***/ 1728:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const fetchUrl_1 = __importDefault(__nccwpck_require__(5050));
+const types_1 = __nccwpck_require__(8164);
+class GithubPRsService extends types_1.Service {
+    constructor(token, config) {
+        super();
+        this.title = ':github: *GH PRs summary:*';
+        this.validateInputs = () => {
+            if (!this.token) {
+                throw new Error('Github: token is missing');
+            }
+            if (!this.config.githubPrs) {
+                throw new Error('Github: config is missing');
+            }
+            if (!this.config.githubPrs.organization) {
+                throw new Error('Github: organization is missing');
+            }
+            if (!this.config.githubPrs.repository) {
+                throw new Error('Github: repository is missing');
+            }
+            if (!this.config.githubPrs.prs || !this.config.githubPrs.prs.length) {
+                throw new Error('Github: no prs were passed to be checked');
+            }
+        };
+        this.getResult = () => __awaiter(this, void 0, void 0, function* () {
+            const { githubPrs: { prs, title = this.title } } = this.config;
+            const fetchedPRs = yield Promise.all(prs.map((pr) => __awaiter(this, void 0, void 0, function* () {
+                return { result: yield this.fetchPRs(pr), params: pr };
+            })));
+            const filteredPRs = fetchedPRs.map(({ params, result }) => ({
+                result: result.filter(this.handleFilters([
+                    this.filterAuthor(params),
+                    this.filterLabels(params)
+                ])),
+                params
+            }));
+            const messages = filteredPRs.map(this.parseMessage).flat();
+            return { title, messages };
+        });
+        this.fetchPRs = (pr) => __awaiter(this, void 0, void 0, function* () {
+            const params = new URLSearchParams({ per_page: '100', pulls: 'false' });
+            for (const [key, value] of Object.entries(pr)) {
+                if (Array.isArray(value)) {
+                    params.append(key, value.join(','));
+                }
+                else {
+                    params.append(key, value);
+                }
+            }
+            return (0, fetchUrl_1.default)(`https://api.github.com/repos/${this.config.githubPrs.organization}/${this.config.githubPrs.repository}/pulls?${params.toString()}`, `token ${this.token}`);
+        });
+        this.handleFilters = (filters) => (item) => {
+            return filters.every(filter => filter(item));
+        };
+        this.filterAuthor = ({ author }) => {
+            return ({ user }) => (author !== undefined ? user.login === author : true);
+        };
+        this.filterLabels = (params) => {
+            return ({ labels }) => !!params.labels &&
+                params.labels.every(label => !!labels.find(prLabel => prLabel.name === label));
+        };
+        this.parseMessage = ({ params, result: prs }) => {
+            const result = [];
+            const { resultType = 'list' } = params, rest = __rest(params, ["resultType"]);
+            const groupTitle = this.parsePRGroupTitle(rest);
+            const groupUrl = this.getUrlForGroup(params);
+            const groupTitleWithUrl = `<${groupUrl}|${groupTitle}>`;
+            if (resultType === 'count') {
+                result.push(`${groupTitleWithUrl}: ${prs.length}`);
+            }
+            else {
+                result.push(`${groupTitleWithUrl}:${!prs.length ? ' 0' : ''}`);
+                for (const pr of prs) {
+                    result.push(this.prToMessage(pr));
+                }
+            }
+            return result;
+        };
+        this.parsePRGroupTitle = (params) => {
+            const { title } = params, rest = __rest(params, ["title"]);
+            if (title) {
+                return title;
+            }
+            return Object.entries(rest)
+                .reduce((res, [key, value]) => {
+                if (value) {
+                    res.push(`${key}: ${Array.isArray(value) ? `[${value.join(', ')}]` : value}`);
+                }
+                return res;
+            }, [])
+                .join(' ');
+        };
+        this.getUrlForGroup = ({ author, base, labels, state }) => {
+            const params = [];
+            if (state) {
+                params.push(`is:${state}`);
+            }
+            if (author) {
+                const [base, suffix] = author.split('[bot]');
+                params.push(`author:"${suffix === '' ? 'app/' : ''}${base}"`);
+            }
+            if (base) {
+                params.push(`base:${base}`);
+            }
+            if (labels === null || labels === void 0 ? void 0 : labels.length) {
+                for (const label of labels) {
+                    params.push(`label:"${label.replace(' ', '+')}"`);
+                }
+            }
+            return `https://github.com/${this.config.githubPrs.organization}/${this.config.githubPrs.repository}/pulls?q=${encodeURI(params.join('+'))}`;
+        };
+        this.prToMessage = ({ url, title }) => {
+            return `<${url}|${title}>`;
+        };
+        this.token = token;
+        this.config = config;
+        this.validateInputs();
+    }
+}
+exports["default"] = GithubPRsService;
 
 
 /***/ }),
@@ -240,7 +392,8 @@ const core = __importStar(__nccwpck_require__(2186));
 const utils_1 = __nccwpck_require__(918);
 const argo_1 = __importDefault(__nccwpck_require__(8216));
 const snyk_1 = __importDefault(__nccwpck_require__(8343));
-const github_1 = __importDefault(__nccwpck_require__(5928));
+const github_actions_1 = __importDefault(__nccwpck_require__(6905));
+const github_prs_1 = __importDefault(__nccwpck_require__(1728));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const githubToken = core.getInput('github_token');
@@ -251,8 +404,14 @@ function run() {
             const config = (0, utils_1.readConfig)(configFIlePath);
             const services = [];
             if (githubToken) {
-                const githubService = new github_1.default(githubToken, config);
-                services.push(githubService);
+                if (config.github) {
+                    const githubActionsService = new github_actions_1.default(githubToken, config);
+                    services.push(githubActionsService);
+                }
+                if (config.githubPrs) {
+                    const githubPRsService = new github_prs_1.default(githubToken, config);
+                    services.push(githubPRsService);
+                }
             }
             if (argocdToken) {
                 const argocdService = new argo_1.default(argocdToken, config);
