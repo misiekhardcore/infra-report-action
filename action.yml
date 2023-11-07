@@ -1,5 +1,5 @@
 name: 'Infra report'
-description: 'Github action to prepare a report containing status of last GHA runs and PRs summary, Snyk vulnerabilities and ArgoCD environments.'
+description: 'GHA to prepare a report containing status of last GHA runs and PRs summary, Snyk vulnerabilities and ArgoCD environments.'
 branding:
   color: purple
   icon: list
