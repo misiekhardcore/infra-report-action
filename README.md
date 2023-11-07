@@ -4,7 +4,7 @@
 
 # Infra report action
 
-Fast and flexible Github action to gather information from last runs of selected GHA, state of ArgoCD environments and Snyk projects vulnerabilities.
+Fast and flexible Github action to gather information from last runs of selected GHA, lists a summary of PRs for matching params, state of ArgoCD environments and Snyk projects vulnerabilities.
 
 Fully configurable with a configuration file. Disable any part of the action by not passing a corresponding token.
 
@@ -95,6 +95,31 @@ The struture of this file is the following:
       // All the branches/references within a project
       versions: string[];
     }[];
+  },
+  githubPrs: {
+    // Optional custom title to override the default one
+    title?: string;
+    // Name of the github organization
+    organization: string;
+    // Name of the repository
+    repository: string;
+    // list of parameters to fetch matching PRs
+    prs: {
+      // The PR author
+      author?: string
+      // The base branch of the PR
+      base?: string
+      // List of labels
+      labels?: string[]
+      // PR state ('open' by default)
+      state?: 'open' | 'close' | 'all'
+      // title for this group of PRs. Defaults to a list of passed params and their values (e.g. author: misiekhardcore state: open labels: [frontend, renovate])
+      title?: string
+      // The type of result we want to acheive (defaults to 'list)
+      // 'list' - lists all PRs as links with title as a label
+      // 'count' - shows the number of matching PRs
+      resultType?: 'list' | 'count'
+    }[]
   }
 }
 ```
@@ -125,12 +150,32 @@ The struture of this file is the following:
     "vulnLevels": ["critical", "high", "medium", "low"],
     "ignoredCVEs": ["CVE-123-4567"],
     "ignoredCWEs": ["CWE-890"],
-    "ignoredVulnIds": ["snyk:lic:maven:ch.qos.logback:logback-core:(EPL-1.0_OR_LGPL-2.1)"],
+    "ignoredVulnIds": [
+      "snyk:lic:maven:ch.qos.logback:logback-core:(EPL-1.0_OR_LGPL-2.1)"
+    ],
     "projects": [
       {
         "project": "project",
         "versions": ["master"],
         "origin": "github"
+      }
+    ]
+  },
+  "githubPrs": {
+    "organization": "org",
+    "repository": "repo",
+    "prs": [
+      {
+        "author": "coolnickname",
+        "base": "main",
+        "labels": ["feature"],
+        "state": "all",
+        "title": "This is a title for all PRs in this group",
+        "resultType": "list"
+      },
+      {
+        "author": "coolnickname",
+        "resultType": "count"
       }
     ]
   }

@@ -10,5 +10,16 @@
       },
       "check-dist"
     ]
+  },
+  "githubPrs": {
+    "title": "title",
+    "organization": "misiekhardcore",
+    "repository": "infra-report-action",
+    "prs": [
+      {
+        "state": "open",
+        "title": "Open PRs"
+      }
+    ]
   }
 }
