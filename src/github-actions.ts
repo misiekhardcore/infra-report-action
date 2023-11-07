@@ -13,7 +13,7 @@ type CiResponse = {
   workflow_runs: Run[]
 }
 
-export default class GithubService extends Service {
+export default class GithubActionsService extends Service {
   protected title = ':github: *GH actions status:*'
 
   constructor(token: string | undefined, config: Config) {
