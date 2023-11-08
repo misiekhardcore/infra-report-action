@@ -1,3 +1,5 @@
+import * as core from '@actions/core'
+
 import fetchUrl from './fetchUrl'
 import {Config, PRParams, Result, Service} from './types'
 
@@ -64,6 +66,8 @@ export default class GithubPRsService extends Service {
       })
     )
 
+    core.debug(JSON.stringify(fetchedPRs))
+
     const filteredPRs: PRGroup[] = fetchedPRs.map(({params, result}) => ({
       result: result.filter(
         this.handleFilters<PR>([
@@ -74,7 +78,11 @@ export default class GithubPRsService extends Service {
       params
     }))
 
+    core.debug(JSON.stringify(filteredPRs))
+
     const messages: string[] = filteredPRs.map(this.parseMessage).flat()
+
+    core.debug(JSON.stringify(messages))
 
     return {title, messages}
   }
