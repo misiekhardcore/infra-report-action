@@ -1,4 +1,5 @@
 name: Release
+
 on:
   workflow_dispatch:
     inputs:
@@ -15,7 +16,13 @@ on:
         description: Don't push commits or tags
         type: boolean
         default: true
+      draft:
+        description: Should the release be a draft?
+        type: boolean
+        default: false
+
 concurrency: release
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -51,6 +58,29 @@ jobs:
 
       - name: Print new release version commit
         run: git show ${{ steps.commit-new-release.outputs.commit_sha }} | cat
+
+      - name: 'Create release'
+        if: inputs.dryRun == false
+        uses: 'actions/github-script@v6'
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          script: |
+            try {
+              const response = await github.rest.repos.createRelease({
+                tag_name: "v${{ inputs.releaseVersion }}",
+                name: "Release ${{ inputs.releaseVersion }}",
+                draft: ${{ inputs.draft }},
+                generate_release_notes: true,
+                prerelease: false,
+                repo: context.repo.repo,
+                owner: context.repo.owner,
+              });
+
+              core.exportVariable('RELEASE_ID', response.data.id);
+              core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
+            } catch (error) {
+              core.setFailed(error.message);
+            }
 
       - name: Set development version in package.json
         uses: jacobtomlinson/gha-find-replace@v3
