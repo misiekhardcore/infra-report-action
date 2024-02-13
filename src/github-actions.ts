@@ -16,7 +16,7 @@ type CiResponse = {
 export default class GithubActionsService extends Service {
   protected title = ':github: *GH actions status:*'
 
-  constructor(token: string | undefined, config: Config) {
+  constructor(token: string, config: Config) {
     super()
     this.token = token
     this.config = config
@@ -104,9 +104,8 @@ export default class GithubActionsService extends Service {
     workflowRuns: CiResponse[]
   ): Run[] => {
     return workflowRuns
-      .map(
-        workflow =>
-          workflow.workflow_runs?.find(run => run.status !== 'in_progress')
+      .map(workflow =>
+        workflow.workflow_runs?.find(run => run.status !== 'in_progress')
       )
       .filter((run): run is Run => run !== undefined)
   }

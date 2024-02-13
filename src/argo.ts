@@ -13,7 +13,7 @@ type ArgoApplicationsResponse = {
 export default class ArgoCdService extends Service {
   protected title = ':argocd: *ArgoCD envs status:*'
 
-  constructor(token: string | undefined, config: Config) {
+  constructor(token: string, config: Config) {
     super()
     this.token = token
     this.config = config

@@ -76,8 +76,12 @@ The struture of this file is the following:
   snyk: {
     // Optional custom title to override the default one
     title?: string;
+    // Version of the snyk API to use, defaults to '2023-05-29'
+    apiVersion?: string
+    // Snyk organization ID
+    organizationId: string;
     // Snyk organization name
-    organization: string;
+    organizationName: string;
     // Which vulnerability levels should be counted and displayed in the report (defaults to ["critical", "high"])
     vulnLevels?: ('critical' | 'high' | 'medium' | 'low')[];
     // A list of CVEs to ignore
@@ -146,7 +150,9 @@ The struture of this file is the following:
   },
   "snyk": {
     "title": "some title to override the default",
-    "organization": "org",
+    "apiVersion": "2023-05029",
+    "organizationId": "org-id",
+    "organizationName": "org",
     "vulnLevels": ["critical", "high", "medium", "low"],
     "ignoredCVEs": ["CVE-123-4567"],
     "ignoredCWEs": ["CWE-890"],

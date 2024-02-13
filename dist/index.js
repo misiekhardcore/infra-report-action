@@ -483,8 +483,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fetchSnykProjectVulnerabilities = exports.fetchSnykProjects = void 0;
 const fetchUrl_1 = __importDefault(__nccwpck_require__(5050));
-const fetchSnykProjects = (organizationId, token) => __awaiter(void 0, void 0, void 0, function* () {
-    return (0, fetchUrl_1.default)(`https://snyk.io/api/v1/org/${organizationId}/projects`, `token ${token}`);
+const fetchSnykProjects = (organizationId, token, apiVersion) => __awaiter(void 0, void 0, void 0, function* () {
+    return (0, fetchUrl_1.default)(`https://api.snyk.io/rest/orgs/${organizationId}/projects?version=${apiVersion}&limit=100`, `token ${token}`);
 });
 exports.fetchSnykProjects = fetchSnykProjects;
 const fetchSnykProjectVulnerabilities = (projectId, organizationId, token) => __awaiter(void 0, void 0, void 0, function* () {
@@ -500,6 +500,29 @@ exports.fetchSnykProjectVulnerabilities = fetchSnykProjectVulnerabilities;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -510,9 +533,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(2186));
 const services_1 = __nccwpck_require__(8261);
 const types_1 = __nccwpck_require__(8164);
 const utils_1 = __nccwpck_require__(918);
+const SNYK_API_VERSION = '2023-05-29';
 class SnykService extends types_1.Service {
     constructor(token, config) {
         super();
@@ -525,8 +550,11 @@ class SnykService extends types_1.Service {
             if (!this.config.snyk) {
                 throw new Error('Snyk: config is missing');
             }
-            if (!this.config.snyk.organization) {
-                throw new Error('Snyk: organization is missing');
+            if (!this.config.snyk.organizationId) {
+                throw new Error('Snyk: organizationId is missing');
+            }
+            if (!this.config.snyk.organizationName) {
+                throw new Error('Snyk: organizationName is missing');
             }
             if (!this.config.snyk.projects || !this.config.snyk.projects.length) {
                 throw new Error('Snyk: no projects were passed to be checked');
@@ -534,23 +562,29 @@ class SnykService extends types_1.Service {
         };
         this.getResult = () => __awaiter(this, void 0, void 0, function* () {
             const { snyk: { projects, title = this.title } } = this.config;
-            const allProjects = (yield (0, services_1.fetchSnykProjects)(this.config.snyk.organization, this.token))
-                .projects || [];
+            const allProjects = (yield (0, services_1.fetchSnykProjects)(this.config.snyk.organizationId, this.token, this.config.snyk.apiVersion || SNYK_API_VERSION)).data || [];
             const allProjectsWithVulns = yield Promise.all(allProjects.map((project) => __awaiter(this, void 0, void 0, function* () {
                 return (Object.assign(Object.assign({}, project), { issues: yield this.getFilteredVulnerabilities(project) }));
             })));
+            core.debug(JSON.stringify(allProjects));
             const filteredProjects = allProjectsWithVulns.filter(this.handleFilters([this.filterProjectsFromConfig(projects)]));
+            core.debug(JSON.stringify(filteredProjects));
             const groupedProjects = this.groupByProjectAndVersion(projects, filteredProjects);
+            core.debug(JSON.stringify(groupedProjects));
             const projectSummaries = groupedProjects
                 .filter(({ projects }) => !!projects.length)
                 .map(this.getSummaryForProjectGroup)
                 .filter((project) => project !== undefined);
+            core.debug(JSON.stringify(projectSummaries));
             const messages = projectSummaries.map(this.formatResults);
+            core.debug(JSON.stringify(messages));
             return { title, messages };
         });
         this.getFilteredVulnerabilities = (project) => __awaiter(this, void 0, void 0, function* () {
-            const { issues } = yield (0, services_1.fetchSnykProjectVulnerabilities)(project.id, this.config.snyk.organization, this.token);
-            return issues.filter(this.handleFilters([
+            const { issues } = yield (0, services_1.fetchSnykProjectVulnerabilities)(project.id, this.config.snyk.organizationName, this.token);
+            return issues
+                .filter((issue) => typeof issue !== 'undefined')
+                .filter(this.handleFilters([
                 this.filterPatchedIgnored,
                 this.filterCves(this.config.snyk.ignoredCVEs),
                 this.filterCwes(this.config.snyk.ignoredCWEs),
@@ -564,10 +598,10 @@ class SnykService extends types_1.Service {
         this.handleFilters = (filters) => (item) => {
             return filters.every(filter => filter(item));
         };
-        this.filterProjectsFromConfig = (configProjects) => ({ name: projectName }) => configProjects.some(({ project, versions }) => versions.some(version => projectName.includes(project) && projectName.includes(version)));
+        this.filterProjectsFromConfig = (configProjects) => ({ attributes: { name: projectName } }) => configProjects.some(({ project, versions }) => versions.some(version => projectName.includes(project) && projectName.includes(version)));
         this.groupByProjectAndVersion = (configProjects, projects) => configProjects.reduce((result, { origin, project, versions }) => {
             for (const version of versions) {
-                const projectsForVersion = projects.filter(({ name }) => name.includes(project) && name.includes(version));
+                const projectsForVersion = projects.filter(({ attributes: { name } }) => name.includes(project) && name.includes(version));
                 result.push({
                     origin,
                     project,
@@ -585,6 +619,8 @@ class SnykService extends types_1.Service {
         this.getProjectVulns = (projects) => {
             return projects.reduce((vulns, { issues = [] }) => {
                 for (const issue of issues) {
+                    if (!(issue === null || issue === void 0 ? void 0 : issue.issueData.severity))
+                        continue;
                     const { issueData: { severity } } = issue;
                     vulns[severity]++;
                 }
@@ -593,8 +629,11 @@ class SnykService extends types_1.Service {
         };
         this.getProjectUrl = (project, version, origin) => {
             const { vulnLevels = this.defaultVulns } = this.config.snyk;
-            const vulnsList = vulnLevels.map(utils_1.capitalize).join('%257C');
-            return `https://app.snyk.io/org/${this.config.snyk.organization}/reporting?context%5Bpage%5D=issues-detail&project_target=${project}&project_origin=${origin}&target_ref=${version}&issue_status=Open&issue_by=Severity&table_issues_detail_cols=SCORE%257CCVE%257CCWE%257CPROJECT%257CEXPLOIT%2520MATURITY%257CAUTO%2520FIXABLE%257CINTRODUCED&table_issues_detail_sort=%2520FIRST_INTRODUCED%2520DESC&issue_severity=${vulnsList}`;
+            const vulnsList = vulnLevels
+                .map(utils_1.capitalize)
+                .map(vuln => `"${vuln}"`)
+                .join(',');
+            return `https://app.snyk.io/org/${this.config.snyk.organizationName}/reporting?context[page]=issues-detail&project_target=${project}&project_origin=${origin}&target_ref=["${version}"]&v=1&issue_status=Open&issue_by=Severity&issue_severity=[${vulnsList}]`;
         };
         this.formatResults = (projectSummary) => {
             const { vulnLevels = this.defaultVulns } = this.config.snyk;
