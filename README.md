@@ -212,7 +212,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Get the report
-        uses: misiekhardcore/infra-report-action@v1.3.2
+        uses: misiekhardcore/infra-report-action@v1.4.0
         id: get-report
         with:
           # This input is required, without the configuration file the action will throw an error
