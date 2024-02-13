@@ -91,7 +91,7 @@ jobs:
           regex: false
 
       - name: Extract semver release version components
-        uses: madhead/semver-utils@5532a76b34d90e0ea245292630e4d3af3d7fe75e # v3
+        uses: madhead/semver-utils@40bbdc6e50b258c09f35f574e83c51f60d2ce3a2 # v4
         id: version
         with:
           version: ${{ inputs.releaseVersion }}
