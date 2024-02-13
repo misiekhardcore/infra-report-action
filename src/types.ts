@@ -40,7 +40,9 @@ export type Config = {
   }
   snyk: {
     title?: string
-    organization: string
+    apiVersion?: string
+    organizationId: string
+    organizationName: string
     vulnLevels?: VulnLevel[]
     ignoredCVEs?: string[]
     ignoredCWEs?: string[]
@@ -60,7 +62,7 @@ export type Config = {
 }
 
 export abstract class Service {
-  protected token: string | undefined
+  protected token!: string
   protected config!: Config
   protected abstract title: string
 

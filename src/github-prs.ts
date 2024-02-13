@@ -26,7 +26,7 @@ type FilterFunction<T = unknown> = (project: T) => boolean
 export default class GithubPRsService extends Service {
   protected title = ':github: *GH PRs summary:*'
 
-  constructor(token: string | undefined, config: Config) {
+  constructor(token: string, config: Config) {
     super()
     this.token = token
     this.config = config
