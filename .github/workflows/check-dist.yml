@@ -3,18 +3,21 @@
 # `index.js` is the code that will run.
 # For our project, we generate this file through a build process from other source files.
 # We need to make sure the checked-in `index.js` actually matches what we expect it to be.
-name: Check dist/
+name: Check dist
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
+    branches: [main]
+    paths-ignore: ['**.md']
   pull_request:
-    paths-ignore:
-      - '**.md'
+    paths-ignore: ['**.md']
   workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 1-5'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check-dist:
@@ -23,10 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
-      - name: Set Node.js 16.x
+      - name: Set Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: 16.x
+          node-version: latest
 
       - name: Install dependencies
         run: npm ci
