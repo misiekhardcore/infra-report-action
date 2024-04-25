@@ -27,7 +27,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
 
       - name: Set release version in package.json
         uses: jacobtomlinson/gha-find-replace@a51bbcd94d000df9ca0fcb54ec8be69aad8374b0 # v3
