@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":automergePr",
+    ":automergeRequireAllStatusChecks",
+    ":separatePatchReleases",
+    ":labels(dependencies)",
+    ":renovatePrefix",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    "group:definitelyTyped"
+  ],
+  "minimumReleaseAge": "3 days",
+  "schedule": ["every weekday"],
+  "prConcurrentLimit": 20,
+  "prBodyNotes": [
+    "{{#if isMajor}}:warning: THIS IS A MAJOR VERSION UPDATE :warning:{{/if}}",
+    "Before merging, *always* check with the release notes if any other changes need to be done."
+  ],
+  "baseBranches": ["main"],
+  "packageRules": [
+    {
+      "addLabels": ["component:frontend"],
+      "languages": ["js"]
+    },
+    {
+      "addLabels": ["component:infra"],
+      "managers": ["docker-compose", "dockerfile", "github-actions"]
+    }
+  ],
+  "patch": {
+    "automerge": true
+  },
+  "pin": {
+    "automerge": true
+  },
+  "digest": {
+    "automerge": true
+  },
+  "platformAutomerge": false
+}
