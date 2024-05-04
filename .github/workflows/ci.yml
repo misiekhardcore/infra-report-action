@@ -27,7 +27,7 @@ jobs:
           node-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: corepack enable && yarn
 
       - name: Check the code
         run: |

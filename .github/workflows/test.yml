@@ -15,10 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
-      - run: |
-          npm install
-      - run: |
-          npm run all
+      - name: Set Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: latest
+      - name: Install dependencies
+        run: corepack enable && yarn
+      - name: Build
+        run: |
+          yarn run all
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
