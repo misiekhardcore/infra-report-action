@@ -1,6 +1,6 @@
 {
   "name": "infra-report-action",
-  "version": "1.5.0",
+  "version": "1.6.0-SNAPSHOT",
   "private": true,
   "description": "GH action to gather and report infra info",
   "main": "lib/main.js",
