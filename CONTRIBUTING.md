@@ -22,25 +22,25 @@ If you're thinking of opening a large pull request, please consider opening an i
 Install the dependencies.
 
 ```
-npm install
+yarn install
 ```
 
 Apply the automatic formatting to the source code.
 
 ```
-npm run format
+yarn run format
 ```
 
 Apply the automatic linting to the source code.
 
 ```
-npm run lint
+yarn run lint
 ```
 
 Build and package the action for distribution.
 
 ```
-npm run build && npm run package
+yarn run build && yarn run package
 ```
 
 ### Testing
@@ -48,19 +48,19 @@ npm run build && npm run package
 Run all tests.
 
 ```
-npm test
+yarn test
 ```
 
 Run all tests in watch mode.
 
 ```
-npm run test-watch
+yarn run test-watch
 ```
 
 Shorthand for format, build, package and test.
 
 ```
-npm run all
+yarn run all
 ```
 
 ### Releases

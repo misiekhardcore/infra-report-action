@@ -25,5 +25,5 @@ outputs:
     description: >
       Parsed report containing infra information about selected environments. Output is in slack message format.
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
