@@ -85,6 +85,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports["default"] = fetchUrl;
 const node_fetch_1 = __importDefault(__nccwpck_require__(1793));
 function fetchUrl(url_1, authHeader_1) {
     return __awaiter(this, arguments, void 0, function* (url, authHeader, method = 'GET') {
@@ -95,7 +96,6 @@ function fetchUrl(url_1, authHeader_1) {
         return response.json();
     });
 }
-exports["default"] = fetchUrl;
 
 
 /***/ }),
@@ -691,14 +691,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.capitalize = exports.parseReport = exports.readConfig = void 0;
+exports.readConfig = readConfig;
+exports.parseReport = parseReport;
+exports.capitalize = capitalize;
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 function readConfig(configFilePath) {
     const configStream = fs_1.default.readFileSync(configFilePath, 'utf8');
     const consigJson = JSON.parse(configStream);
     return consigJson;
 }
-exports.readConfig = readConfig;
 function parseReport(services) {
     return __awaiter(this, void 0, void 0, function* () {
         const results = yield Promise.all(services.map((service) => __awaiter(this, void 0, void 0, function* () { return service.getResult(); })));
@@ -713,11 +714,9 @@ function parseReport(services) {
             .join('\n');
     });
 }
-exports.parseReport = parseReport;
 function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
-exports.capitalize = capitalize;
 
 
 /***/ }),
