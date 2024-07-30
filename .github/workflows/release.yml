@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Set release version in package.json
-        uses: jacobtomlinson/gha-find-replace@a51bbcd94d000df9ca0fcb54ec8be69aad8374b0 # v3
+        uses: jacobtomlinson/gha-find-replace@099c88fbf2a7da26b083521a8bfa13e4f0886b97 # v3
         with:
           find: '"version": "[0-9\.]+(-SNAPSHOT)?"'
           replace: '"version": "${{ inputs.releaseVersion }}"'
@@ -38,7 +38,7 @@ jobs:
           regex: true
 
       - name: Set release version in README example
-        uses: jacobtomlinson/gha-find-replace@a51bbcd94d000df9ca0fcb54ec8be69aad8374b0 # v3
+        uses: jacobtomlinson/gha-find-replace@099c88fbf2a7da26b083521a8bfa13e4f0886b97 # v3
         with:
           find: 'infra-report-action@v[0-9\.]+'
           replace: 'infra-report-action@v${{ inputs.releaseVersion }}'
@@ -83,7 +83,7 @@ jobs:
             }
 
       - name: Set development version in package.json
-        uses: jacobtomlinson/gha-find-replace@a51bbcd94d000df9ca0fcb54ec8be69aad8374b0 # v3
+        uses: jacobtomlinson/gha-find-replace@099c88fbf2a7da26b083521a8bfa13e4f0886b97 # v3
         with:
           find: '"version": "${{ inputs.releaseVersion }}"'
           replace: '"version": "${{ inputs.nextDevelopmentVersion }}"'
