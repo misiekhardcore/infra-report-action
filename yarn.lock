@@ -1046,7 +1046,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:^29.5.12":
+"@types/jest@npm:29.5.14":
   version: 29.5.14
   resolution: "@types/jest@npm:29.5.14"
   dependencies:
@@ -1063,7 +1063,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node-fetch@npm:^2.6.11":
+"@types/node-fetch@npm:2.6.12":
   version: 2.6.12
   resolution: "@types/node-fetch@npm:2.6.12"
   dependencies:
@@ -1073,7 +1073,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^22.0.0":
+"@types/node@npm:*, @types/node@npm:22.15.17":
   version: 22.15.17
   resolution: "@types/node@npm:22.15.17"
   dependencies:
@@ -3625,9 +3625,9 @@ __metadata:
   resolution: "infra-report-action@workspace:."
   dependencies:
     "@actions/core": "npm:^1.10.1"
-    "@types/jest": "npm:^29.5.12"
-    "@types/node": "npm:^22.0.0"
-    "@types/node-fetch": "npm:^2.6.11"
+    "@types/jest": "npm:29.5.14"
+    "@types/node": "npm:22.15.17"
+    "@types/node-fetch": "npm:2.6.12"
     "@typescript-eslint/eslint-plugin": "npm:^8.1.0"
     "@typescript-eslint/parser": "npm:^8.1.0"
     "@vercel/ncc": "npm:^0.38.1"
