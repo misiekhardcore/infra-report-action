@@ -3,5 +3,5 @@
   "extends": ["github>misiekhardcore/configs//renovate/default.json5"],
   "schedule": ["every weekday"],
   "prConcurrentLimit": 60,
-  "baseBranches": ["main"]
+  "baseBranchPatterns": ["main"]
 }
