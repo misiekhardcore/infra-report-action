@@ -36,12 +36,12 @@
     "@eslint/js": "9.35.0",
     "@types/eslint__eslintrc": "3.3.0",
     "@types/jest": "30.0.0",
-    "@types/node": "22.18.4",
+    "@types/node": "22.18.6",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
     "@typescript-eslint/eslint-plugin": "8.44.0",
     "@typescript-eslint/parser": "8.44.0",
-    "@vercel/ncc": "0.38.3",
+    "@vercel/ncc": "0.38.4",
     "eslint": "9.35.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-github": "6.0.0",
@@ -53,7 +53,7 @@
     "jiti": "2.5.1",
     "lint-staged": "16.1.6",
     "prettier": "3.6.2",
-    "ts-jest": "29.4.2",
+    "ts-jest": "29.4.4",
     "ts-node": "10.9.2",
     "typescript": "5.9.2"
   }
