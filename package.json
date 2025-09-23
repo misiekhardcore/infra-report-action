@@ -4,7 +4,7 @@
   "private": true,
   "description": "GH action to gather and report infra info",
   "main": "lib/main.js",
-  "packageManager": "yarn@4.10.0",
+  "packageManager": "yarn@4.10.2",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write '**/*.ts'",
